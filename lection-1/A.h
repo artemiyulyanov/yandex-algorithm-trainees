@@ -7,7 +7,7 @@
 
 class A {
 public:
-    std::map<char, char> dct;
+    static std::map<char, char> dct;
 
     static void solve();
 };
