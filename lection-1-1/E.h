@@ -5,7 +5,7 @@
 #include <map>
 #include <stack>
 
-class A {
+class E {
 public:
     static std::map<char, char> dct;
 
