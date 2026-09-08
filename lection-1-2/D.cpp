@@ -30,13 +30,11 @@ void D::solve() {
     std::string s;
     std::getline(std::cin, s);
 
-    char delimiter = ' ';
-
     std::stringstream ss(s);
     std::string token;
     std::vector<std::string> tokens;
 
-    while (std::getline(ss, token, delimiter)) {
+    while (std::getline(ss, token, ' ')) {
         tokens.push_back(token);
     }
 
