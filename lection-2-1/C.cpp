@@ -1,42 +1,142 @@
-//
-// Created by Артемий on 12/09/2026.
-//
-
 #include "C.h"
+
+bool C::isCrossRoadEquivalent(int a, int b) {
+    if (a > b) {
+        std::swap(a, b);
+    }
+
+    return (a == 1 && b == 3) ||
+           (a == 2 && b == 4);
+}
+
+int C::getRightIndexFor(int direction) {
+    return direction == 1 ? 4 : direction - 1;
+}
+
+bool C::isMain(int direction) {
+    return direction == mainA || direction == mainB;
+}
+
+bool C::mustGiveWay(const Rover& x, const Rover& y) {
+    bool xMain = isMain(x.direction);
+    bool yMain = isMain(y.direction);
+
+    
+    if (!xMain && yMain) {
+        return true;
+    }
+
+    
+    if (xMain && !yMain) {
+        return false;
+    }
+
+    
+    return getRightIndexFor(x.direction) == y.direction;
+}
 
 void C::solve() {
     int n;
     std::cin >> n;
 
-    std::unordered_map<int, std::vector<Rover>> roversWithDirectionAtTimestamp;
-    std::vector<int> res(n, 0);
+    std::cin >> mainA >> mainB;
 
-    for (int i = 0; i < n; i++) {
+    result.resize(n);
+
+    for (int i = 0; i < n; ++i) {
         int d, t;
         std::cin >> d >> t;
 
-        roversWithDirectionAtTimestamp.try_emplace(t, std::vector<Rover>());
-
-        roversWithDirectionAtTimestamp[t].push_back(Rover {
-            d, t, i
+        roads[d].push_back({
+            d,
+            t,
+            i
         });
     }
+    
+    for (int d = 1; d <= 4; ++d) {
+        std::sort(
+            roads[d].begin(),
+            roads[d].end(),
+            [](const Rover& x, const Rover& y) {
+                return x.arrivalTime < y.arrivalTime;
+            }
+        );
+    }
 
-    std::vector<std::queue<Rover>> directionQueues(5);
+    int remaining = n;
+    int currentTime = 1;
 
-    int passed = 0;
+    while (remaining > 0) {
+        std::vector<int> front;
+        
+        for (int d = 1; d <= 4; ++d) {
+            if (!roads[d].empty() &&
+                roads[d].front().arrivalTime <= currentTime) {
 
-    int timestamp = 1;
-
-    while (passed < n) {
-        if (roversWithDirectionAtTimestamp.contains(timestamp)) {
-            for (auto& rover : roversWithDirectionAtTimestamp[timestamp]) {
-                directionQueues[rover.direction].push(rover);
+                front.push_back(d);
             }
         }
+        
+        if (front.empty()) {
+            int nextTime = 1e9;
 
+            for (int d = 1; d <= 4; ++d) {
+                if (!roads[d].empty()) {
+                    nextTime = std::min(
+                        nextTime,
+                        roads[d].front().arrivalTime
+                    );
+                }
+            }
 
+            currentTime = nextTime;
+            continue;
+        }
 
-        timestamp++;
+        std::vector<int> canPass;
+        
+        for (int d : front) {
+            const Rover& rover = roads[d].front();
+
+            bool can = true;
+
+            for (int otherD : front) {
+                if (d == otherD) {
+                    continue;
+                }
+
+                const Rover& other = roads[otherD].front();
+                
+                if (mustGiveWay(rover, other)) {
+                    can = false;
+                    break;
+                }
+            }
+
+            if (can) {
+                canPass.push_back(d);
+            }
+        }
+        
+        if (canPass.empty()) {
+            currentTime++;
+            continue;
+        }
+        
+        for (int d : canPass) {
+            Rover rover = roads[d].front();
+
+            result[rover.id] = currentTime;
+
+            roads[d].pop_front();
+            --remaining;
+        }
+
+        ++currentTime;
+    }
+
+    for (int time : result) {
+        std::cout << time << '\n';
     }
 }
